@@ -1,10 +1,10 @@
 {
-  "last_updated": "2026-06-05T06:35:00+02:00",
+  "last_updated": "2026-06-05T20:55:00+02:00",
   "current_phase": "Phase 3: Audit the TypeScript Repository",
   "active_module": {
-    "typescript_path": "packages/coding-agent/src/config.ts",
-    "python_path": "python/src/pi_mono/config.py",
-    "status": "in-progress"
+    "typescript_path": "packages/coding-agent/src/utils/fs-watch.ts",
+    "python_path": "python/src/pi_mono/utils/fs_watch.py",
+    "status": "completed"
   },
   "completed_modules": [
     {
@@ -34,11 +34,43 @@
     {
       "typescript_path": "packages/coding-agent/src/core/resolve-config-value.ts",
       "python_path": "python/src/pi_mono/core/resolve_config_value.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/config.ts",
+      "python_path": "python/src/pi_mono/config.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/paths.ts",
+      "python_path": "python/src/pi_mono/utils/paths.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/sleep.ts",
+      "python_path": "python/src/pi_mono/utils/sleep.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/ansi.ts",
+      "python_path": "python/src/pi_mono/utils/ansi.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/deprecation.ts",
+      "python_path": "python/src/pi_mono/utils/deprecation.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/open-browser.ts",
+      "python_path": "python/src/pi_mono/utils/open_browser.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/version-check.ts",
+      "python_path": "python/src/pi_mono/utils/version_check.py"
+    },
+    {
+      "typescript_path": "packages/coding-agent/src/utils/fs-watch.ts",
+      "python_path": "python/src/pi_mono/utils/fs_watch.py"
     }
   ],
   "interruption_checkpoint": {
-    "last_completed_function": "resolve_config_value",
-    "next_pending_function": "detect_install_method",
+    "last_completed_function": "watch_with_error_handler",
+    "next_pending_function": "None",
     "unresolved_build_error": "None"
   }
 }

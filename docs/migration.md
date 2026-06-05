@@ -44,6 +44,14 @@
 | `abort-signals` | `packages/ai/src/utils/abort-signals.ts` | `python/src/pi_mono/utils/abort_signals.py` | Completed | 100% | AbortController/Signal emulation |
 | `resolve-config-value` | `packages/coding-agent/src/core/resolve-config-value.ts` | `python/src/pi_mono/core/resolve_config_value.py` | Completed | 100% | Config value resolution ($ENV, !cmd) |
 | `shell` | `packages/coding-agent/src/utils/shell.ts` | `python/src/pi_mono/utils/shell.py` | Completed | 100% | Shell config and environment resolver |
+| `config` | `packages/coding-agent/src/config.ts` | `python/src/pi_mono/config.py` | Completed | 100% | Application configuration and path detection |
+| `paths` | `packages/coding-agent/src/utils/paths.ts` | `python/src/pi_mono/utils/paths.py` | Completed | 100% | Path resolution and normalization helpers |
+| `sleep` | `packages/coding-agent/src/utils/sleep.ts` | `python/src/pi_mono/utils/sleep.py` | Completed | 100% | Async delay wrapper function |
+| `ansi` | `packages/coding-agent/src/utils/ansi.ts` | `python/src/pi_mono/utils/ansi.py` | Completed | 100% | ANSI formatting strip utility |
+| `deprecation` | `packages/coding-agent/src/utils/deprecation.ts` | `python/src/pi_mono/utils/deprecation.py` | Completed | 100% | Deprecation warning utility |
+| `open-browser` | `packages/coding-agent/src/utils/open-browser.ts` | `python/src/pi_mono/utils/open_browser.py` | Completed | 100% | Platform browser/default handler launching helper |
+| `version-check` | `packages/coding-agent/src/utils/version-check.ts` | `python/src/pi_mono/utils/version_check.py` | Completed | 100% | Version checking and semantic version comparisons |
+| `fs-watch` | `packages/coding-agent/src/utils/fs-watch.ts` | `python/src/pi_mono/utils/fs_watch.py` | Completed | 100% | Safe file system watcher with recovery logic |
 
 ## Known Behavior Differences
 
