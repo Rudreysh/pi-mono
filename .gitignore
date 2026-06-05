@@ -39,3 +39,9 @@ plans/
 .pi/hf-sessions/
 .pi/hf-sessions-backup/
 collect.sh
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/

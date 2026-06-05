@@ -1,0 +1,30 @@
+[project]
+name = "pi-mono-python"
+version = "0.1.0"
+description = "Python port of pi-mono TypeScript implementation"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "ruff",
+  "mypy",
+  "black"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.black]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
