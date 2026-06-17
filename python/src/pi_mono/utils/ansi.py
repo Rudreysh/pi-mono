@@ -19,7 +19,7 @@ def strip_ansi(value: str) -> str:
         raise TypeError(f"Expected a `str`, got `{type(value).__name__}`")
 
     # Fast path: ANSI codes require ESC (7-bit) or CSI (8-bit) introducer
-    if "\u001B" not in value and "\u009B" not in value:
+    if "\u001b" not in value and "\u009b" not in value:
         return value
 
     return REGEX.sub("", value)

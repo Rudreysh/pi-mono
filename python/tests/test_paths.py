@@ -37,12 +37,12 @@ def test_normalize_path(monkeypatch):
 
     # Unicode space normalization (e.g. \u00A0 is a no-break space)
     assert (
-        paths.normalize_path("path\u00A0with\u3000spaces", normalize_unicode_spaces=True)
+        paths.normalize_path("path\u00a0with\u3000spaces", normalize_unicode_spaces=True)
         == "path with spaces"
     )
     assert (
-        paths.normalize_path("path\u00A0with\u3000spaces", normalize_unicode_spaces=False)
-        == "path\u00A0with\u3000spaces"
+        paths.normalize_path("path\u00a0with\u3000spaces", normalize_unicode_spaces=False)
+        == "path\u00a0with\u3000spaces"
     )
 
     # Strip @ prefix
