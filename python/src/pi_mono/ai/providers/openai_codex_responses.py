@@ -5,13 +5,13 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
-import platform
 import re
 import time
 from typing import Any, AsyncIterator
 
 import httpx
 
+from pi_mono.utils.pi_user_agent import get_pi_user_agent
 from pi_mono.ai.models import clamp_thinking_level
 from pi_mono.ai.providers.openai_prompt_cache import clamp_openai_prompt_cache_key
 from pi_mono.ai.providers.openai_responses_shared import (
@@ -166,7 +166,7 @@ def _build_base_codex_headers(
     headers["Authorization"] = f"Bearer {token}"
     headers["chatgpt-account-id"] = account_id
     headers["originator"] = "pi"
-    headers["User-Agent"] = f"pi ({platform.system()} {platform.release()}; {platform.machine()})"
+    headers["User-Agent"] = get_pi_user_agent()
     return headers
 
 
@@ -274,16 +274,22 @@ def _build_request_body(
         )
 
     reasoning_effort = options.get("reasoningEffort") if options else None
+    thinking_map = model.get("thinkingLevelMap") or {}
     if reasoning_effort is not None:
-        thinking_map = model.get("thinkingLevelMap", {})
-        effort = (
-            thinking_map.get("off", "none")
-            if reasoning_effort == "none"
-            else thinking_map.get(reasoning_effort, reasoning_effort)
-        )
+        if reasoning_effort == "none":
+            effort = thinking_map["off"] if "off" in thinking_map else "none"
+        else:
+            effort = thinking_map.get(reasoning_effort, reasoning_effort)
         if effort is not None:
             body["reasoning"] = {
                 "effort": effort,
+                "summary": (options or {}).get("reasoningSummary", "auto"),
+            }
+    elif model.get("reasoning"):
+        off_is_explicit_null = isinstance(thinking_map, dict) and "off" in thinking_map and thinking_map["off"] is None
+        if not off_is_explicit_null:
+            body["reasoning"] = {
+                "effort": thinking_map.get("off") or "none",
                 "summary": (options or {}).get("reasoningSummary", "auto"),
             }
 
@@ -371,6 +377,19 @@ async def _parse_sse(
                 raise CodexProtocolError(
                     f"Invalid Codex SSE JSON: {error}", payload=data
                 ) from error
+    if buffer.strip():
+        buffer += "\n\n"
+        part, _rest = buffer.split("\n\n", 1)
+        data_lines = [line[5:].strip() for line in part.split("\n") if line.startswith("data:")]
+        if data_lines:
+            data = "\n".join(data_lines).strip()
+            if data and data != "[DONE]":
+                try:
+                    yield json.loads(data)
+                except json.JSONDecodeError as error:
+                    raise CodexProtocolError(
+                        f"Invalid Codex SSE JSON: {error}", payload=data
+                    ) from error
 
 
 async def _parse_error_response(response: httpx.Response) -> dict[str, str | None]:

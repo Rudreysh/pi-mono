@@ -60,12 +60,32 @@ def get_compat(model: Model[str]) -> OpenAIResponsesCompat:
     return {
         "sessionAffinityFormat": format_val,
         "supportsLongCacheRetention": compat.get("supportsLongCacheRetention", True),
+        "supportsExplicitPromptCacheMode": compat.get("supportsExplicitPromptCacheMode", False),
+        "supportsMaxOutputTokens": compat.get("supportsMaxOutputTokens", True),
         "sendSessionIdHeader": compat.get("sendSessionIdHeader", True),
     }
 
 
 def get_prompt_cache_retention(compat: OpenAIResponsesCompat, cache_retention: str) -> str | None:
-    return "24h" if cache_retention == "long" and compat.get("supportsLongCacheRetention") else None
+    return (
+        "24h"
+        if cache_retention == "long"
+        and compat.get("supportsLongCacheRetention")
+        and not compat.get("supportsExplicitPromptCacheMode")
+        else None
+    )
+
+
+def get_prompt_cache_options(
+    compat: OpenAIResponsesCompat, cache_retention: str
+) -> dict[str, str] | None:
+    if not compat.get("supportsExplicitPromptCacheMode"):
+        return None
+    if cache_retention == "none":
+        return {"mode": "explicit"}
+    if cache_retention == "long" and compat.get("supportsLongCacheRetention"):
+        return {"ttl": "30m"}
+    return None
 
 
 def format_openai_responses_error(error: Exception) -> str:
@@ -77,7 +97,7 @@ def format_openai_responses_error(error: Exception) -> str:
 
 
 def _get_prompt_cache_retention(compat: OpenAIResponsesCompat, cache_retention: str) -> str | None:
-    return "24h" if cache_retention == "long" and compat.get("supportsLongCacheRetention") else None
+    return get_prompt_cache_retention(compat, cache_retention)
 
 
 def _format_openai_responses_error(error: Exception) -> str:
@@ -87,19 +107,33 @@ def _format_openai_responses_error(error: Exception) -> str:
     return str(error)
 
 
+OPENAI_RESPONSES_MIN_OUTPUT_TOKENS = 16
+
+
+def _pick(kwargs: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in kwargs:
+            return kwargs[key]
+    return None
+
+
 class OpenAIResponsesOptions:
-    def __init__(
-        self,
-        reasoning_effort: str | None = None,
-        reasoning_summary: str | None = None,
-        service_tier: str | None = None,
-        **kwargs,
-    ):
-        self.reasoning_effort = reasoning_effort
-        self.reasoning_summary = reasoning_summary
-        self.service_tier = service_tier
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, **kwargs: Any):
+        self._data = kwargs
+        self.reasoning_effort = _pick(kwargs, "reasoningEffort", "reasoning_effort")
+        self.reasoning_summary = kwargs.get("reasoningSummary", kwargs.get("reasoning_summary"))
+        self.service_tier = _pick(kwargs, "serviceTier", "service_tier")
+        self.session_id = _pick(kwargs, "sessionId", "session_id")
+        self.cache_retention = _pick(kwargs, "cacheRetention", "cache_retention")
+        self.max_tokens = _pick(kwargs, "maxTokens", "max_tokens")
+        self.temperature = kwargs.get("temperature")
+        self.tool_choice = _pick(kwargs, "toolChoice", "tool_choice")
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self._data.get(key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._data[key]
 
 
 def _get_service_tier_cost_multiplier(model_id: str, service_tier: str | None) -> float:
@@ -122,7 +156,7 @@ def _apply_service_tier_pricing(usage: Usage, service_tier: str | None, model_id
         usage["cost"]["input"]
         + usage["cost"]["output"]
         + usage["cost"]["cacheRead"]
-        + usage["cost"]["cost"]["cacheWrite"]
+        + usage["cost"]["cacheWrite"]
     )
 
 
@@ -203,14 +237,19 @@ def _build_params(
         "prompt_cache_retention": _get_prompt_cache_retention(compat, cache_retention),
         "store": False,
     }
+    prompt_cache_options = get_prompt_cache_options(compat, cache_retention)
+    if prompt_cache_options is not None:
+        params["prompt_cache_options"] = prompt_cache_options
 
     if options:
-        if options.get("maxTokens"):
-            params["max_output_tokens"] = options["maxTokens"]
-        if options.get("temperature") is not None:
-            params["temperature"] = options["temperature"]
-        if options.get("serviceTier") is not None:
-            params["service_tier"] = options["serviceTier"]
+        if options.max_tokens and compat.get("supportsMaxOutputTokens", True):
+            params["max_output_tokens"] = max(options.max_tokens, OPENAI_RESPONSES_MIN_OUTPUT_TOKENS)
+        if options.temperature is not None:
+            params["temperature"] = options.temperature
+        if options.service_tier is not None:
+            params["service_tier"] = options.service_tier
+        if options.tool_choice is not None:
+            params["tool_choice"] = options.tool_choice
 
     if context.get("tools"):
         params["tools"] = convert_responses_tools(context["tools"])
@@ -219,7 +258,12 @@ def _build_params(
         reasoning_effort = options.reasoning_effort if options else None
         reasoning_summary = options.reasoning_summary if options else None
         if reasoning_effort or reasoning_summary:
-            effort = reasoning_effort if reasoning_effort else "medium"
+            mapped = (
+                model.get("thinkingLevelMap", {}).get(reasoning_effort, reasoning_effort)
+                if reasoning_effort
+                else "medium"
+            )
+            effort = mapped if mapped else "medium"
             params["reasoning"] = {
                 "effort": effort,
                 "summary": reasoning_summary or "auto",

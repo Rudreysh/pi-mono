@@ -4,12 +4,14 @@ import json
 import inspect
 
 from pi_mono.ai.providers.openai_codex_responses import (
+    _build_request_body,
     _build_sse_headers,
     _extract_account_id,
+    _parse_sse,
     _resolve_codex_url,
+    stream_openai_codex_responses,
     stream_simple_openai_codex_responses,
 )
-from pi_mono.ai.providers.openai_codex_responses import stream_openai_codex_responses
 
 
 def _token(account_id: str) -> str:
@@ -54,3 +56,31 @@ def test_build_sse_headers():
     assert headers["OpenAI-Beta"] == "responses=experimental"
     assert headers["accept"] == "text/event-stream"
     assert headers["session-id"] == "session-1"
+
+
+def test_build_request_body_sends_off_effort_when_omitted():
+    model = {
+        "id": "gpt-5.4",
+        "provider": "openai-codex",
+        "api": "openai-codex-responses",
+        "reasoning": True,
+        "thinkingLevelMap": {"off": "none", "low": "low"},
+    }
+    context = {"systemPrompt": "sys", "messages": [{"role": "user", "content": "hi"}]}
+    body = _build_request_body(model, context, {})
+    assert body["reasoning"]["effort"] == "none"
+
+
+def test_parse_sse_does_not_flush_partial_json_mid_stream():
+    import asyncio
+
+    class FakeResponse:
+        async def aiter_text(self):
+            yield 'data: {"type": "response.created", "n": '
+            yield "1}\n\n"
+
+    async def run():
+        return [event async for event in _parse_sse(FakeResponse(), None)]
+
+    events = asyncio.run(run())
+    assert events == [{"type": "response.created", "n": 1}]

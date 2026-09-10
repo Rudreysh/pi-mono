@@ -115,6 +115,8 @@ class OpenAIResponsesCompat(TypedDict, total=False):
 
     sessionAffinityFormat: SessionAffinityFormat
     supportsLongCacheRetention: bool
+    supportsExplicitPromptCacheMode: bool
+    supportsMaxOutputTokens: bool
     # Deprecated: use sessionAffinityFormat instead.
     sendSessionIdHeader: bool
 
@@ -217,6 +219,7 @@ class AssistantMessage(TypedDict, total=False):
     stopReason: StopReason
     errorMessage: str
     timestamp: int  # Unix timestamp in milliseconds
+    providerThinkingLevel: str
 
 
 class AssistantMessageEventStart(TypedDict):
