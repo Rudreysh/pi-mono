@@ -350,6 +350,9 @@ jobs:
       - name: Check Python model catalogs
         run: python python/scripts/generate_models.py --check
 
+      - name: Smoke-test packed npm consumer
+        run: npm run check:package-install
+
       - name: Verify release artifacts are committed
         run: git diff --exit-code
 
